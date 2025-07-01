@@ -1,42 +1,41 @@
-# Uncomment the required imports before adding the code
-
-# from django.shortcuts import render
-# from django.http import HttpResponseRedirect, HttpResponse
-# from django.contrib.auth.models import User
-# from django.shortcuts import get_object_or_404, render, redirect
-# from django.contrib.auth import logout
-# from django.contrib import messages
-# from datetime import datetime
-
+# server/djangoapp/views.py
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from django.contrib.auth import login, authenticate
-import logging
-import json
+from django.contrib.auth import login, authenticate, logout
 from django.views.decorators.csrf import csrf_exempt
-# from .populate import initiate
+import logging, json
 
 
-# Get an instance of a logger
 logger = logging.getLogger(__name__)
 
-
-# Create your views here.
-
-# Create a `login_request` view to handle sign in request
 @csrf_exempt
 def login_user(request):
-    # Get username and password from request.POST dictionary
-    data = json.loads(request.body)
-    username = data['userName']
-    password = data['password']
-    # Try to check if provide credential can be authenticated
-    user = authenticate(username=username, password=password)
-    data = {"userName": username}
-    if user is not None:
-        # If user is valid, call login method to login current user
-        login(request, user)
-        data = {"userName": username, "status": "Authenticated"}
-    return JsonResponse(data)
+    try:
+        payload = json.loads(request.body)
+        username = payload['userName']
+        password = payload['password']
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.error(f"Login payload error: {e}")
+        return JsonResponse({"error": "Invalid request data"}, status=400)
+
+    try:
+        user = authenticate(username=username, password=password)
+        if user:
+            login(request, user)
+            return JsonResponse({"userName": username, "status": "Authenticated"})
+        else:
+            return JsonResponse({"userName": username, "status": "Failed"}, status=401)
+    except Exception as e:
+        logger.error(f"Authentication error: {e}")
+        return JsonResponse({"error": "Server error"}, status=500)
+
+def logout_view(request):
+    try:
+        logout(request)
+    except Exception as e:
+        logger.error(f"Logout error: {e}")
+        # Even if logout fails, still redirect to login
+    return redirect('djangoapp:login')
 
 # Create a `logout_request` view to handle sign out request
 # def logout_request(request):
