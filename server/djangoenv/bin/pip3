@@ -1,4 +1,4 @@
-#!/home/project/xrwvm-fullstack_developer_capstone/server/djangoenv/bin/python3.11
+#!/home/project/xrwvm-fullstack_developer_capstone/server/djangoenv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
